@@ -5,6 +5,9 @@ import type {
   BacktestRequest,
   BacktestResponse,
   Universe,
+  ScreeningRequest,
+  ScreeningResultResponse,
+  ScreeningSummary,
 } from '../types'
 
 const api = axios.create({
@@ -45,6 +48,29 @@ export const getBacktestResult = async (taskId: string): Promise<BacktestRespons
 
 export const getUniverses = async (): Promise<{ universes: Universe[] }> => {
   const { data } = await api.get('/config/universes')
+  return data
+}
+
+// --- 预筛 ---
+
+export const triggerScreening = async (req: ScreeningRequest): Promise<ScreeningResultResponse> => {
+  const { data } = await api.post('/screener/run', req)
+  return data
+}
+
+export const getScreeningResult = async (screeningId?: number): Promise<ScreeningResultResponse> => {
+  const params = screeningId === undefined ? {} : { screening_id: screeningId }
+  const { data } = await api.get('/screener/result', { params })
+  return data
+}
+
+export const getScreeningStats = async (): Promise<ScreeningResultResponse['stats']> => {
+  const { data } = await api.get('/screener/stats')
+  return data
+}
+
+export const getScreeningHistory = async (limit = 10): Promise<ScreeningSummary[]> => {
+  const { data } = await api.get('/screener/history', { params: { limit } })
   return data
 }
 

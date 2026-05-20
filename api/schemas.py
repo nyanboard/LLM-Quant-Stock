@@ -85,3 +85,55 @@ class BacktestResponse(BaseModel):
     status: str
     metrics: BacktestMetrics
     equity_curve: list[EquityPoint]
+
+
+# --- 预筛相关 ---
+
+class ScreenRequest(BaseModel):
+    """预筛请求：指定股票池触发预筛"""
+    universe: Universe = Field(default=Universe.hs300, description="股票池标识")
+
+
+class ScreeningStockItem(BaseModel):
+    """预筛结果中的单只股票信息"""
+    symbol: str = Field(description="股票代码（纯数字格式）")
+    name: Optional[str] = Field(default=None, description="股票名称")
+    passed: int = Field(description="是否通过预筛（1=通过，0=被过滤）")
+    exclusion_reasons: Optional[list[str]] = Field(default=None, description="被过滤的原因列表")
+    market_cap: Optional[float] = Field(default=None, description="总市值（亿元）")
+    pe: Optional[float] = Field(default=None, description="市盈率")
+    pb: Optional[float] = Field(default=None, description="市净率")
+    roe: Optional[float] = Field(default=None, description="净资产收益率（%）")
+    price: Optional[float] = Field(default=None, description="当前价格（元）")
+
+
+class ScreenStatsResponse(BaseModel):
+    """预筛统计摘要"""
+    total: int = Field(description="参与筛选的股票总数")
+    passed_count: int = Field(description="通过预筛的股票数量")
+    excluded_count: int = Field(description="被过滤的股票数量")
+    dimension_breakdown: dict[str, int] = Field(
+        default_factory=dict,
+        description="各维度淘汰统计，如 {'ST': 15, '市值': 30}",
+    )
+
+
+class ScreenResultResponse(BaseModel):
+    """预筛结果完整响应"""
+    screening_id: Optional[int] = Field(description="预筛记录 ID")
+    universe: str = Field(description="股票池标识")
+    status: str = Field(description="状态: running/completed/failed")
+    passed: list[ScreeningStockItem] = Field(default_factory=list, description="通过预筛的股票")
+    excluded: list[ScreeningStockItem] = Field(default_factory=list, description="被过滤的股票")
+    stats: ScreenStatsResponse = Field(description="统计摘要")
+
+
+class ScreeningSummary(BaseModel):
+    """预筛历史摘要（不含股票明细）"""
+    screening_id: int
+    pool_id: Optional[int] = None
+    universe: str
+    total_count: int
+    passed_count: int
+    excluded_count: int
+    created_at: float = Field(description="创建时间（Unix timestamp）")

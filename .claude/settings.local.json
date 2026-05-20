@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec list *)",
+      "Bash(python -c \"import sys,json; d=json.loads\\(sys.stdin.read\\(\\).split\\('\\\\n'\\)[1]\\); [print\\(json.dumps\\(t\\)\\) for t in d['tasks'] if not t['done']]\")",
+      "Bash(python -c \"with open\\('api/__init__.py','r',encoding='utf-8'\\) as f: print\\(f.read\\(\\)\\)\")",
+      "Bash(python -c \"with open\\('api/__init__.py','r',encoding='utf-8'\\) as f: print\\(repr\\(f.read\\(\\)\\)\\)\")",
+      "Bash(python -c \"import os; print\\(os.path.getsize\\('api/__init__.py'\\)\\); print\\(hex\\(os.path.getsize\\('api/__init__.py'\\)\\)\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -m pytest tests/test_screener_api.py -v)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(.venv\\\\Scripts\\\\python.exe -m pip install baostock akshare fastapi uvicorn pydantic pandas numpy pyyaml)"
+    ]
+  }
+}

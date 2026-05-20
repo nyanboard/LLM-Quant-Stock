@@ -54,3 +54,34 @@ class DataSource(ABC):
     @abstractmethod
     def get_realtime_quotes(self, symbols: list[str]) -> pd.DataFrame:
         """获取实时行情快照"""
+
+    @abstractmethod
+    def get_stock_metrics(self, symbols: list[str]) -> pd.DataFrame:
+        """批量获取预筛指标数据
+
+        用于预筛模块一次性获取所有候选股票的基本面指标，避免逐只查询。
+        返回的 DataFrame 包含预筛所需的全部维度数据（市值、PE、PB、ROE 等），
+        由各数据源实现类负责从不同 API 聚合数据。
+
+        Args:
+            symbols: 股票代码列表（纯数字格式），如 ["600519", "000858"]
+
+        Returns:
+            DataFrame，至少包含以下列：
+            - symbol: 股票代码（纯数字格式，统一由数据层转换）
+            - name: 股票名称
+            - industry: 行业分类
+            - list_date: 上市日期
+            - market_cap: 总市值（亿元）
+            - pe: 市盈率 TTM
+            - pb: 市净率
+            - roe: 净资产收益率（%）
+            - debt_ratio: 资产负债率（%）
+            - revenue: 营业收入（亿元）
+            - operating_cashflow: 经营现金流（亿元）
+
+        注意：
+        - akshare 和 baostock 各自能获取部分指标，两者合并后才有完整数据
+        - 调用方（MetricsSyncer）负责合并两个数据源的结果
+        - 股票代码必须返回纯数字格式（隐性约定）
+        """

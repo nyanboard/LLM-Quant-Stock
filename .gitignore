@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pip-cache/
+*.egg-info/
+
+# Node
+web/node_modules/
+web/dist/
+
+# Data cache
+data/cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+config/secrets/
+config/api_keys/
+
+# Debug
+_debug_*.txt

@@ -48,22 +48,22 @@ pre_screen:
 
 filters:
   required:
-    - rsi_14 < 70
-    - volume_ratio > 0.8
-    - "ma5 > ma20 or cross_up(ma5, ma20)"
+    - condition: "rsi_14 < 70"
+    - condition: "volume_ratio > 0.8"
+    - condition: "ma5 > ma20 or cross_up(ma5, ma20)"
 
   bonus:
     - pattern: hammer
       score: +2
     - pattern: bullish_engulfing
       score: +2
-    - macd_golden_cross: true
+    - condition: "macd_golden_cross == true"
       score: +3
-    - rsi_14 < 30
+    - condition: "rsi_14 < 30"
       score: +1
-    - money_flow_net > 0
+    - condition: "money_flow_net > 0"
       score: +2
 
   veto:
-    - rsi_14 > 85
-    - limit_down: true
+    - condition: "rsi_14 > 85"
+    - condition: "limit_down == true"
