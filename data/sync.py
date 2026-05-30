@@ -48,22 +48,21 @@ class MetricsSyncer:
         self,
         datasource: DataSource,
         cache: DataCache,
+        secondary_datasource: Optional["DataSource"] = None,
         request_interval: float = 0.4,
         max_retries: int = 3,
     ):
         """初始化同步器
 
         Args:
-            datasource: 数据源实例（AkShareSource 或 BaoStockSource），
-                       用于调用 get_stock_metrics() 获取指标数据
+            datasource: 主数据源实例，用于调用 get_stock_metrics() 获取指标数据
             cache: 数据缓存实例，用于读写 stock_metrics 表
+            secondary_datasource: 辅助数据源（可选），与主数据源合并以补全字段
             request_interval: 请求间隔时间（秒），默认 0.4 秒。
-                            防止频繁请求触发数据源限流。
-                            akshare/baostock 的上游数据源（东方财富、新浪）
-                            有反爬机制，建议不低于 0.3 秒。
             max_retries: 单只股票获取失败时的最大重试次数，默认 3 次。
         """
         self.datasource = datasource
+        self.secondary_datasource = secondary_datasource
         self.cache = cache
         self.request_interval = request_interval
         self.max_retries = max_retries
@@ -115,6 +114,63 @@ class MetricsSyncer:
 
         return df
 
+    def _merge_metrics(
+        self, primary: pd.DataFrame, secondary: Optional[pd.DataFrame]
+    ) -> pd.DataFrame:
+        """合并两个数据源的指标数据
+
+        按symbol做outer join，primary优先，用secondary填补primary中的None。
+        """
+        if secondary is None or secondary.empty:
+            return primary
+        if primary.empty:
+            return secondary
+
+        metric_cols = [
+            "name", "industry", "list_date", "market_cap", "pe", "pb",
+            "roe", "debt_ratio", "revenue", "operating_cashflow",
+        ]
+
+        merged = primary.merge(secondary, on="symbol", how="outer", suffixes=("", "_sec"))
+        for col in metric_cols:
+            sec_col = f"{col}_sec"
+            if sec_col in merged.columns:
+                merged[col] = merged[col].fillna(merged[sec_col])
+                merged.drop(columns=[sec_col], inplace=True)
+
+        if "synced_at_sec" in merged.columns:
+            merged["synced_at"] = merged["synced_at"].combine_first(merged["synced_at_sec"])
+            merged.drop(columns=["synced_at_sec"], inplace=True)
+
+        return merged
+
+    @staticmethod
+    def realtime_df_to_dict(df: pd.DataFrame) -> dict[str, dict]:
+        """将实时行情 DataFrame 转为 screener 期望的 dict 格式
+
+        Args:
+            df: get_realtime_quotes() 返回的 DataFrame
+
+        Returns:
+            {"600519": {"is_st": False, "price": 1800.0, ...}, ...}
+        """
+        if df is None or df.empty:
+            return {}
+        result = {}
+        for _, row in df.iterrows():
+            symbol = row.get("symbol")
+            if symbol:
+                result[symbol] = {
+                    "is_st": bool(row.get("is_st", False)),
+                    "is_suspended": bool(row.get("is_suspended", False)),
+                    "is_limit_up": bool(row.get("is_limit_up", False)),
+                    "is_limit_down": bool(row.get("is_limit_down", False)),
+                    "price": row.get("price"),
+                    "turnover_rate": row.get("turnover_rate"),
+                    "avg_amount": row.get("avg_amount"),
+                }
+        return result
+
     def _fetch_with_retry(self, symbols: list[str]) -> Optional[pd.DataFrame]:
         """带重试和限流保护的数据拉取
 
@@ -143,6 +199,18 @@ class MetricsSyncer:
                     attempt, self.max_retries, len(symbols),
                 )
                 df = self.datasource.get_stock_metrics(symbols)
+                if df is None:
+                    df = pd.DataFrame()
+
+                # 从辅助数据源获取并合并
+                if self.secondary_datasource is not None:
+                    try:
+                        df_sec = self.secondary_datasource.get_stock_metrics(symbols)
+                        if df_sec is not None and not df_sec.empty:
+                            df = self._merge_metrics(df, df_sec)
+                            logger.info("双数据源合并完成")
+                    except Exception as e:
+                        logger.warning("辅助数据源获取失败，仅使用主数据源: %s", str(e))
 
                 if df is not None and not df.empty:
                     return df

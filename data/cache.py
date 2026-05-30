@@ -221,29 +221,48 @@ class DataCache:
         return pd.DataFrame([dict(r) for r in rows])
 
     def upsert_metrics(self, df: pd.DataFrame):
-        """批量写入/更新预筛指标
+        """批量写入/更新预筛指标（合并感知策略）
 
-        使用 INSERT OR REPLACE 策略：如果 symbol 已存在则更新所有字段，
-        如果不存在则插入新记录。每次调用会刷新所有记录的 synced_at 时间戳。
+        对于已存在的 symbol，仅更新 DataFrame 中非 None 的字段，
+        保留该 symbol 已有的其他字段值。避免覆盖来自其他数据源的数据。
 
         Args:
             df: 包含预筛指标的 DataFrame，必须包含以下列：
                 symbol, name, industry, list_date, market_cap, pe, pb,
                 roe, debt_ratio, revenue, operating_cashflow, synced_at
         """
-        cols = [
-            "symbol", "name", "industry", "list_date", "market_cap",
-            "pe", "pb", "roe", "debt_ratio", "revenue",
-            "operating_cashflow", "synced_at",
+        metric_cols = [
+            "name", "industry", "list_date", "market_cap", "pe", "pb",
+            "roe", "debt_ratio", "revenue", "operating_cashflow", "synced_at",
         ]
         for _, row in df.iterrows():
-            # 使用 row.get() 而非 row[]，避免因列名不匹配而报错，缺失字段填 None
-            values = tuple(row.get(c) for c in cols)
-            placeholders = ",".join("?" * len(cols))
-            self._conn.execute(
-                f"INSERT OR REPLACE INTO stock_metrics ({','.join(cols)}) VALUES ({placeholders})",
-                values,
-            )
+            symbol = row.get("symbol")
+            if not symbol:
+                continue
+
+            existing = self._conn.execute(
+                "SELECT * FROM stock_metrics WHERE symbol = ?", (symbol,)
+            ).fetchone()
+
+            if existing is None:
+                values = tuple(row.get(c) for c in ["symbol"] + metric_cols)
+                placeholders = ",".join("?" * (1 + len(metric_cols)))
+                self._conn.execute(
+                    f"INSERT INTO stock_metrics (symbol, {','.join(metric_cols)}) VALUES ({placeholders})",
+                    values,
+                )
+            else:
+                updates = {}
+                for col in metric_cols:
+                    val = row.get(col)
+                    if val is not None and not (isinstance(val, float) and pd.isna(val)):
+                        updates[col] = val
+                if updates:
+                    set_clause = ", ".join(f"{col} = ?" for col in updates.keys())
+                    self._conn.execute(
+                        f"UPDATE stock_metrics SET {set_clause} WHERE symbol = ?",
+                        list(updates.values()) + [symbol],
+                    )
         self._conn.commit()
 
     # ══════════════════════════════════════════════════════════════

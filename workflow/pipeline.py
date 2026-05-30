@@ -56,17 +56,17 @@ class StockSelectionPipeline:
         datasource: DataSource,
         config: dict,
         cache: Optional[DataCache] = None,
+        secondary_datasource: Optional[DataSource] = None,
+        realtime_source=None,
     ):
         """初始化 Pipeline
 
         Args:
-            datasource: 数据源实例（BaoStockSource / AkShareSource）
-            config: 全局配置字典，包含以下可能的键：
-                - score_weights: 综合评分权重
-                - debate_rounds: 多空辩论轮数，默认 2
-                - screener_rules_path: 预筛规则文件路径
-            cache: 数据缓存实例。如果为 None，预筛和同步功能不启用，
-                  Pipeline 将回退到原始流程（直接全量分析）。
+            datasource: 主数据源实例（BaoStockSource）
+            config: 全局配置字典
+            cache: 数据缓存实例。如果为 None，预筛和同步功能不启用。
+            secondary_datasource: 辅助数据源（AkShareSource），用于合并补全字段。
+            realtime_source: 实时行情数据源，需实现 get_realtime_quotes(symbols)。
         """
         self.datasource = datasource
         self.config = config
@@ -90,12 +90,13 @@ class StockSelectionPipeline:
                 cache=cache,
                 rules_path=config.get("screener_rules_path", "config/quant_rules.yaml"),
             )
-            syncer = MetricsSyncer(datasource=datasource, cache=cache)
+            syncer = MetricsSyncer(datasource=datasource, cache=cache, secondary_datasource=secondary_datasource)
             self.scheduler = DataScheduler(
                 datasource=datasource,
                 cache=cache,
                 syncer=syncer,
                 screener=screener,
+                realtime_source=realtime_source,
             )
 
     def run(

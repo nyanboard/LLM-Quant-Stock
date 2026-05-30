@@ -11,7 +11,30 @@
       "Bash(npm install *)",
       "Bash(npx tsc *)",
       "Bash(npx vite *)",
-      "Bash(.venv\\\\Scripts\\\\python.exe -m pip install baostock akshare fastapi uvicorn pydantic pandas numpy pyyaml)"
+      "Bash(.venv\\\\Scripts\\\\python.exe -m pip install baostock akshare fastapi uvicorn pydantic pandas numpy pyyaml)",
+      "Bash(pip3 install *)",
+      "Bash(conda info *)",
+      "Read(//Users/a1/miniconda3/bin/**)",
+      "Read(//Users/a1/anaconda3/bin/**)",
+      "Bash(/usr/bin/python3 --version)",
+      "Bash(/usr/bin/python3 -c \"import ssl; print\\(ssl.get_default_verify_paths\\(\\)\\)\")",
+      "Bash(python3 -c \"import certifi; print\\(certifi.where\\(\\)\\)\")",
+      "Bash(python3 -m pytest tests/ -v)",
+      "Bash(python3 -m pytest tests/test_screener.py tests/test_screener_api.py -v -k \"not test_run_with_default_universe and not test_run_with_universe and not test_result and not test_stats and not test_history\" --timeout=30)",
+      "Bash(python3 -m pytest tests/test_screener.py -v)",
+      "Bash(python3 run.py --sync-only --universe hs300)",
+      "Bash(curl -sI --max-time 10 \"https://82.push2.eastmoney.com\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -sv --max-time 10 \"https://82.push2.eastmoney.com\")",
+      "Bash(curl -s --max-time 10 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f12,f14\")",
+      "Bash(curl -s --max-time 10 -w \"\\\\nRC:%{http_code}\" \"https://datacenter-web.eastmoney.com/api/data/v1/get?reportName=RPT_LICO_FN_CPD&columns=SECURITY_CODE,SECURITY_NAME_ABBR,TRADE_DATE,CLOSE_PRICE,CHANGE_RATE&filter=\\(SECURITY_CODE=%22600519%22\\)&pageSize=3\")",
+      "Bash(curl -s --max-time 30 \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f2,f3,f5,f6,f8,f9,f12,f14,f20,f23\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'total: {d[\\\\\"data\\\\\"][\\\\\"total\\\\\"]}'\\); [print\\(f'  {i[\\\\\"f12\\\\\"]} {i[\\\\\"f14\\\\\"]}: PE={i.get\\(\\\\\"f9\\\\\"\\)} PB={i.get\\(\\\\\"f23\\\\\"\\)} 市值={round\\(i.get\\(\\\\\"f20\\\\\",0\\)/1e8\\)}亿'\\) for i in d['data']['diff'][:3]]\")",
+      "Bash(curl -s --max-time 30 -w \"\\\\nRC:%{http_code} SIZE:%{size_download}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f2,f3,f5,f6,f8,f9,f12,f14,f20,f23\")",
+      "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f2,f8,f9,f12,f14,f20,f23\")",
+      "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=100&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f2,f8,f9,f12,f14,f20,f23\")",
+      "Bash(python3 -c \"import sys; print\\(sys.stdin.read\\(\\)[:200]\\)\")",
+      "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f12,f14\")"
     ]
   }
 }

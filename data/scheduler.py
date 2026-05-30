@@ -61,6 +61,7 @@ class DataScheduler:
         cache: DataCache,
         syncer: MetricsSyncer,
         screener=None,
+        realtime_source=None,
     ):
         """初始化调度器
 
@@ -69,14 +70,13 @@ class DataScheduler:
             cache: 数据缓存实例，用于保存股票池快照和预筛结果
             syncer: 指标同步器，用于同步慢数据到 stock_metrics 表
             screener: 预筛器实例（可选），需实现 screen(symbols) 方法。
-                     如果为 None，run_daily() 只执行同步，不执行预筛。
-                     这个参数是 Optional 的，因为预筛模块（quant/screener.py）
-                     可能尚未实现，调度器仍可独立完成数据同步部分。
+            realtime_source: 实时行情数据源（可选），需实现 get_realtime_quotes(symbols)。
         """
         self.datasource = datasource
         self.cache = cache
         self.syncer = syncer
         self.screener = screener
+        self.realtime_source = realtime_source
 
     def run_daily(
         self, universe: str = "hs300"
@@ -161,7 +161,17 @@ class DataScheduler:
 
         logger.info("Step 3: 执行预筛")
         try:
-            screen_result = self.screener.screen(symbols)
+            # 获取实时行情数据
+            realtime_data = {}
+            if self.realtime_source is not None:
+                try:
+                    rt_df = self.realtime_source.get_realtime_quotes(symbols)
+                    realtime_data = MetricsSyncer.realtime_df_to_dict(rt_df)
+                    logger.info("实时行情获取完成: %d 只股票", len(realtime_data))
+                except Exception as e:
+                    logger.warning("实时行情获取失败，预筛将仅使用慢数据: %s", str(e))
+
+            screen_result = self.screener.screen(symbols, realtime_data=realtime_data)
             screening_id = self.cache.save_screening_result(screen_result, pool_id=pool_id)
             logger.info(
                 "预筛完成: screening_id=%d, 通过 %d 只, 过滤 %d 只",

@@ -61,18 +61,21 @@ def _run_screening_background(universe: str, cache: DataCache):
     """后台任务：执行完整的预筛流程（股票池同步 → 指标同步 → 预筛）"""
     try:
         from data.baostock_source import BaoStockSource
+        from data.akshare_source import AkShareSource
         from data.sync import MetricsSyncer
         from data.scheduler import DataScheduler
         from quant.screener import StockScreener
 
-        datasource = BaoStockSource()
-        syncer = MetricsSyncer(datasource=datasource, cache=cache)
+        baostock = BaoStockSource()
+        akshare = AkShareSource()
+        syncer = MetricsSyncer(datasource=baostock, cache=cache, secondary_datasource=akshare)
         screener = StockScreener(cache=cache)
         scheduler = DataScheduler(
-            datasource=datasource,
+            datasource=baostock,
             cache=cache,
             syncer=syncer,
             screener=screener,
+            realtime_source=akshare,
         )
         scheduler.run_daily(universe)
         logger.info("后台预筛完成: universe=%s", universe)

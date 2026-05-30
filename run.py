@@ -49,21 +49,23 @@ def main():
 
     # 加载配置和初始化组件
     config = load_config()
-    datasource = BaoStockSource()  # 主数据源
-    cache = DataCache()  # SQLite 缓存
+    baostock = BaoStockSource()
+    akshare = AkShareSource()
+    cache = DataCache()
     cache.init_metrics_table()
     cache.init_pool_table()
     cache.init_screening_tables()
 
     # 仅同步模式：执行每日同步后退出
     if args.sync_only:
-        syncer = MetricsSyncer(datasource=datasource, cache=cache)
+        syncer = MetricsSyncer(datasource=baostock, cache=cache, secondary_datasource=akshare)
         screener = StockScreener(cache=cache)
         scheduler = DataScheduler(
-            datasource=datasource,
+            datasource=baostock,
             cache=cache,
             syncer=syncer,
             screener=screener,
+            realtime_source=akshare,
         )
         logger.info("执行每日同步（universe=%s）", args.universe)
         result = scheduler.run_daily(args.universe)
@@ -76,7 +78,10 @@ def main():
         return
 
     # 选股模式：创建 Pipeline 并执行
-    pipeline = StockSelectionPipeline(datasource, config, cache=cache)
+    pipeline = StockSelectionPipeline(
+        baostock, config, cache=cache,
+        secondary_datasource=akshare, realtime_source=akshare,
+    )
 
     mode = "全量分析（跳过预筛）" if args.skip_screener else "预筛 + LLM 分析"
     print(f"开始选股：股票池={args.universe}，模式={mode}")
