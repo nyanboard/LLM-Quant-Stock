@@ -34,7 +34,30 @@
       "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f2,f8,f9,f12,f14,f20,f23\")",
       "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=100&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f2,f8,f9,f12,f14,f20,f23\")",
       "Bash(python3 -c \"import sys; print\\(sys.stdin.read\\(\\)[:200]\\)\")",
-      "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f12,f14\")"
+      "Bash(curl -s --max-time 15 -w \"\\\\nRC:%{http_code}\" \"https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=3&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281&fltt=2&invt=2&fid=f12&fs=m:0+t:6&fields=f12,f14\")",
+      "PowerShell(.venv\\\\Scripts\\\\python.exe -m uvicorn api.main:app --reload --port 8000)",
+      "Bash(timeout 8)",
+      "Bash(curl -s http://127.0.0.1:8000/api/v1/screener/result)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/api/v1/screener/result)",
+      "Bash(sqlite3 data/cache/stock_data.db \"SELECT screening_id, created_at FROM screening_results ORDER BY created_at DESC LIMIT 3;\")",
+      "Bash(sqlite3 data/cache/stock_data.db \"SELECT symbol, name, passed, market_cap, pe, pb FROM screening_stocks WHERE screening_id = 6 LIMIT 5;\")",
+      "Bash(sqlite3 data/cache/stock_data.db \"SELECT COUNT\\(*\\) FROM stock_metrics;\")",
+      "Bash(sqlite3 data/cache/stock_data.db \"SELECT symbol, name, market_cap, pe, pb FROM stock_metrics WHERE symbol IN \\('600000', '600009'\\) AND synced_at > 0 LIMIT 2;\")",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(curl -s http://localhost:8000/api/v1/screener/result)",
+      "Bash(openspec new *)",
+      "Bash(openspec status *)",
+      "Bash(openspec instructions *)",
+      "Bash(git mv *)",
+      "Bash(git rm *)",
+      "Bash(ls tests/)",
+      "Bash(python -c \"from data.cache import DataCache; from data.sync import MetricsSyncer; from data.scheduler import DataScheduler; print\\('All imports OK'\\)\")",
+      "Bash(python -m pytest tests/test_sync.py -v)",
+      "Bash(pip install *)",
+      "Bash(tasklist)",
+      "Bash(powershell -Command \"Get-Process python -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 2; Remove-Item -Force 'e:\\\\workspace-gitlab\\\\vvvvvvvvvvvvvvvvvvvv\\\\LLM-Quant-Stock\\\\data\\\\cache\\\\stock_data.db' -ErrorAction SilentlyContinue; if \\(Test-Path 'e:\\\\workspace-gitlab\\\\vvvvvvvvvvvvvvvvvvvv\\\\LLM-Quant-Stock\\\\data\\\\cache\\\\stock_data.db'\\) { Write-Output 'FAILED: file still exists' } else { Write-Output 'OK: database file deleted' }\")",
+      "Bash(powershell -Command \"Stop-Process -Name python -Force -ErrorAction SilentlyContinue; Start-Sleep -Seconds 3; Remove-Item -Force 'e:\\\\workspace-gitlab\\\\vvvvvvvvvvvvvvvvvvvv\\\\LLM-Quant-Stock\\\\data\\\\cache\\\\stock_data.db'\")",
+      "Read(//e/workspace-gitlab/vvvvvvvvvvvvvvvvvvvv/LLM-Quant-Stroke/.vscode/**)"
     ]
   }
 }

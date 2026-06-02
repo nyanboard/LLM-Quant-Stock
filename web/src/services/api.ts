@@ -5,9 +5,10 @@ import type {
   BacktestRequest,
   BacktestResponse,
   Universe,
-  ScreeningRequest,
-  ScreeningResultResponse,
-  ScreeningSummary,
+  SyncRequest,
+  SyncResponse,
+  SyncStatus,
+  MetricsQueryResponse,
 } from '../types'
 
 const api = axios.create({
@@ -51,26 +52,29 @@ export const getUniverses = async (): Promise<{ universes: Universe[] }> => {
   return data
 }
 
-// --- 预筛 ---
+// --- 数据同步（metrics）---
 
-export const triggerScreening = async (req: ScreeningRequest): Promise<ScreeningResultResponse> => {
-  const { data } = await api.post('/screener/run', req)
+export const triggerSync = async (req: SyncRequest): Promise<SyncResponse> => {
+  const { data } = await api.post('/metrics/sync', req)
   return data
 }
 
-export const getScreeningResult = async (screeningId?: number): Promise<ScreeningResultResponse> => {
-  const params = screeningId === undefined ? {} : { screening_id: screeningId }
-  const { data } = await api.get('/screener/result', { params })
+export const getSyncStatus = async (): Promise<SyncStatus> => {
+  const { data } = await api.get('/metrics/sync/status')
   return data
 }
 
-export const getScreeningStats = async (): Promise<ScreeningResultResponse['stats']> => {
-  const { data } = await api.get('/screener/stats')
-  return data
-}
-
-export const getScreeningHistory = async (limit = 10): Promise<ScreeningSummary[]> => {
-  const { data } = await api.get('/screener/history', { params: { limit } })
+export const queryMetrics = async (params?: {
+  page?: number
+  page_size?: number
+  pe_min?: number
+  pe_max?: number
+  roe_min?: number
+  market_cap_min?: number
+  is_st?: number
+  is_suspended?: number
+}): Promise<MetricsQueryResponse> => {
+  const { data } = await api.get('/metrics/query', { params })
   return data
 }
 

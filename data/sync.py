@@ -120,6 +120,8 @@ class MetricsSyncer:
         """合并两个数据源的指标数据
 
         按symbol做outer join，primary优先，用secondary填补primary中的None。
+        同时合并实时行情字段（is_st, is_suspended, is_limit_up, is_limit_down,
+        price, turnover_rate, avg_amount）。
         """
         if secondary is None or secondary.empty:
             return primary
@@ -129,6 +131,8 @@ class MetricsSyncer:
         metric_cols = [
             "name", "industry", "list_date", "market_cap", "pe", "pb",
             "roe", "debt_ratio", "revenue", "operating_cashflow",
+            "is_st", "is_suspended", "is_limit_up", "is_limit_down",
+            "price", "turnover_rate", "avg_amount",
         ]
 
         merged = primary.merge(secondary, on="symbol", how="outer", suffixes=("", "_sec"))
@@ -175,20 +179,18 @@ class MetricsSyncer:
         """带重试和限流保护的数据拉取
 
         策略：
-        1. 调用 datasource.get_stock_metrics(symbols) 批量获取
-        2. 如果失败，等待 request_interval 后重试，最多 max_retries 次
-        3. 如果全部重试失败，返回 None
+        1. 调用 datasource.get_stock_metrics(symbols) 批量获取慢数据
+        2. 调用 secondary_datasource.get_realtime_quotes(symbols) 获取实时行情
+        3. 合并慢数据 + 实时数据到一个 DataFrame
+        4. 如果失败，等待 request_interval 后重试，最多 max_retries 次
 
-        注意：当前实现是一次性批量获取所有 symbols。
-        如果部分股票获取失败（如停牌导致数据缺失），
-        datasource 实现应当返回成功获取的部分数据（而非抛异常），
-        缺失的股票由后续同步轮次补齐。
+        实时数据获取失败不阻塞慢数据返回，实时字段置为 None。
 
         Args:
             symbols: 股票代码列表
 
         Returns:
-            成功获取的指标 DataFrame，全部失败返回 None
+            合并后的指标 DataFrame（含慢数据 + 实时字段），全部失败返回 None
         """
         last_error = None
 
@@ -202,15 +204,25 @@ class MetricsSyncer:
                 if df is None:
                     df = pd.DataFrame()
 
-                # 从辅助数据源获取并合并
+                # 从辅助数据源获取慢数据并合并
                 if self.secondary_datasource is not None:
                     try:
                         df_sec = self.secondary_datasource.get_stock_metrics(symbols)
                         if df_sec is not None and not df_sec.empty:
                             df = self._merge_metrics(df, df_sec)
-                            logger.info("双数据源合并完成")
+                            logger.info("双数据源慢数据合并完成")
                     except Exception as e:
                         logger.warning("辅助数据源获取失败，仅使用主数据源: %s", str(e))
+
+                # 获取实时行情数据并合并
+                if self.secondary_datasource is not None:
+                    try:
+                        rt_df = self.secondary_datasource.get_realtime_quotes(symbols)
+                        if rt_df is not None and not rt_df.empty:
+                            df = self._merge_metrics(df, rt_df)
+                            logger.info("实时行情数据合并完成（%d 只）", len(rt_df))
+                    except Exception as e:
+                        logger.warning("实时行情获取失败，实时字段将为空: %s", str(e))
 
                 if df is not None and not df.empty:
                     return df
@@ -227,7 +239,6 @@ class MetricsSyncer:
 
             # 重试前等待（最后一次失败后不需要等待）
             if attempt < self.max_retries:
-                # 等待时间随重试次数递增：0.4s, 0.8s, 1.2s（指数退避的简化版）
                 wait_time = self.request_interval * attempt
                 logger.info("等待 %.1f 秒后重试...", wait_time)
                 time.sleep(wait_time)

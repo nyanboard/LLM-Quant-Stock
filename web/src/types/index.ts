@@ -87,51 +87,52 @@ export interface Universe {
   name: string
 }
 
-// ── 预筛相关 ──
+// ── 数据同步（metrics）相关 ──
 
-// 预筛请求
-export interface ScreeningRequest {
+// 同步请求
+export interface SyncRequest {
   universe?: 'hs300' | 'zz500' | 'zz1000' | 'sza'
 }
 
-// 预筛单只股票
-export interface ScreeningStock {
+// 同步触发响应
+export interface SyncResponse {
+  sync_id: string
+  status: 'running' | 'completed' | 'failed'
+  universe: string
+}
+
+// 同步状态
+export interface SyncStatus {
+  status: 'idle' | 'running' | 'no_data'
+  total_count: number
+  last_synced_at: number | null
+  last_synced_at_str: string | null
+}
+
+// 单只股票指标（stock_metrics 宽表一行）
+export interface MetricsItem {
   symbol: string
   name?: string
-  passed: number
-  exclusion_reasons?: string[]
+  industry?: string
   market_cap?: number
   pe?: number
   pb?: number
   roe?: number
+  debt_ratio?: number
+  revenue?: number
+  operating_cashflow?: number
+  is_st?: number
+  is_suspended?: number
+  is_limit_up?: number
+  is_limit_down?: number
   price?: number
+  turnover_rate?: number
+  avg_amount?: number
+  synced_at?: number
 }
 
-// 预筛统计
-export interface ScreeningStats {
+// 指标查询响应
+export interface MetricsQueryResponse {
   total: number
-  passed_count: number
-  excluded_count: number
-  dimension_breakdown: Record<string, number>
-}
-
-// 预筛结果响应
-export interface ScreeningResultResponse {
-  screening_id: number | null
-  universe: string
-  status: 'running' | 'completed' | 'failed'
-  passed: ScreeningStock[]
-  excluded: ScreeningStock[]
-  stats: ScreeningStats
-}
-
-// 预筛历史摘要
-export interface ScreeningSummary {
-  screening_id: number
-  pool_id?: number
-  universe: string
-  total_count: number
-  passed_count: number
-  excluded_count: number
-  created_at: number
+  items: MetricsItem[]
 }

@@ -5,12 +5,12 @@ import {
   LineChartOutlined,
   RobotOutlined,
   SettingOutlined,
-  FilterOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import StockResult from './pages/StockResult'
-import Screening from './pages/Screening'
+import DataSync from './pages/DataSync'
 import Backtest from './pages/Backtest'
 import AgentView from './pages/AgentView'
 import Settings from './pages/Settings'
@@ -20,7 +20,7 @@ const { Header, Content } = Layout
 const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: '看板' },
   { key: '/stock', icon: <StockOutlined />, label: '选股结果' },
-  { key: '/screening', icon: <FilterOutlined />, label: '预筛分析' },
+  { key: '/data-sync', icon: <DatabaseOutlined />, label: '数据同步' },
   { key: '/backtest', icon: <LineChartOutlined />, label: '回测分析' },
   { key: '/agent', icon: <RobotOutlined />, label: 'Agent详情' },
   { key: '/settings', icon: <SettingOutlined />, label: '配置' },
@@ -49,7 +49,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/stock" element={<StockResult />} />
           <Route path="/stock/:symbol" element={<StockResult />} />
-          <Route path="/screening" element={<Screening />} />
+          <Route path="/data-sync" element={<DataSync />} />
           <Route path="/backtest" element={<Backtest />} />
           <Route path="/agent" element={<AgentView />} />
           <Route path="/settings" element={<Settings />} />
